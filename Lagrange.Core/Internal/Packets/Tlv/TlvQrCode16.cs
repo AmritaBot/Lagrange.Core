@@ -11,7 +11,7 @@ internal class Tlv16QrCode : TlvBody
     public Tlv16QrCode(BotAppInfo appInfo, BotDeviceInfo deviceInfo)
     {
         SubAppId = (uint)appInfo.AppId;
-        AppIdQrCode = (uint)appInfo.AppIdQrCode;
+        AppIdQrCode = (uint)appInfo.SubAppId;
         Guid = deviceInfo.Guid.ToByteArray();
         PackageName = appInfo.PackageName;
         PtVersion = appInfo.PtVersion;
