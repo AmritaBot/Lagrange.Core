@@ -269,3 +269,4 @@ docs/node_modules
 docs/.vitepress/dist
 docs/.vitepress/cache
 docs/api
+dist/
