@@ -21,6 +21,20 @@ public static class HostApplicationBuilderExtension
     public static HostApplicationBuilder ConfigureLagrangeCore(this HostApplicationBuilder builder)
     {
         builder.Services
+            .AddSingleton((services) => // Device
+            {
+                var configuration = services.GetRequiredService<IConfiguration>();
+                string path = configuration["ConfigPath:DeviceInfo"] ?? "device.json";
+
+                var device = File.Exists(path)
+                    ? JsonSerializer.Deserialize<BotDeviceInfo>(File.ReadAllText(path)) ?? BotDeviceInfo.GenerateInfo()
+                    : BotDeviceInfo.GenerateInfo();
+
+                string deviceJson = JsonSerializer.Serialize(device);
+                File.WriteAllText(path, deviceJson);
+
+                return device;
+            })
             .AddSingleton<OneBotSigner>() // Signer
             .AddSingleton((services) => // BotConfig
             {
@@ -40,20 +54,6 @@ public static class HostApplicationBuilderExtension
                     AutoReLogin = configuration.GetValue("Account:AutoReLogin", true),
                     CustomSignProvider = services.GetRequiredService<OneBotSigner>()
                 };
-            })
-            .AddSingleton((services) => // Device
-            {
-                var configuration = services.GetRequiredService<IConfiguration>();
-                string path = configuration["ConfigPath:DeviceInfo"] ?? "device.json";
-
-                var device = File.Exists(path)
-                    ? JsonSerializer.Deserialize<BotDeviceInfo>(File.ReadAllText(path)) ?? BotDeviceInfo.GenerateInfo()
-                    : BotDeviceInfo.GenerateInfo();
-
-                string deviceJson = JsonSerializer.Serialize(device);
-                File.WriteAllText(path, deviceJson);
-
-                return device;
             })
             .AddSingleton((services) => // Keystore
             {

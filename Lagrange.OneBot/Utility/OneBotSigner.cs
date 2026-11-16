@@ -39,7 +39,7 @@ public class OneBotSigner : SignProvider
 
     private readonly bool _isMacQua;
 
-    public OneBotSigner(IConfiguration config, ILogger<OneBotSigner> logger)
+    public OneBotSigner(IConfiguration config, ILogger<OneBotSigner> logger, BotDeviceInfo deviceInfo)
     {
         _configuration = config;
         _logger = logger;
@@ -77,7 +77,9 @@ public class OneBotSigner : SignProvider
         _isLinuxQua = _qua.StartsWith("V1_LNX_");
         _isMacQua = _qua.StartsWith("V1_MAC_");
 
-        _guid = config["SignServerGuid"] ?? Guid.NewGuid().ToByteArray().Hex(true);
+        // Prefer the device GUID from device.json so the signer sees the same identity
+        // as the SSO packets built by SsoPacker; SignServerGuid can still override it.
+        _guid = config["SignServerGuid"] ?? deviceInfo.Guid.ToByteArray().Hex(true);
         _uin = config.GetValue("Account:Uin", 0u);
     }
 
