@@ -14,7 +14,11 @@ jobs:
       contents: write
 
     steps:
-      - run: gh release delete nightly --cleanup-tag -y -R ${{ github.repository }}
+      # nightly 不存在时 gh release delete 会报错退出, 导致下游 create-tag/upload 全部失败
+      # 首次运行 / 新 fork 上必然不存在, 必须容忍
+      - run: |
+          gh release delete nightly --cleanup-tag -y -R ${{ github.repository }} \
+            || echo "nightly release not found, nothing to delete"
 
   create-tag:
     needs:
@@ -28,7 +32,14 @@ jobs:
     steps:
       - run: echo -e "> ⚠️This is a nightly release.\r\n> ⚠️This is not the latest version." > note
 
-      - run: gh release create nightly -F ./note -p -t "Nightly Release" -R ${{ github.repository }}
+      # 幂等: 已存在 (delete 失败的场景) 就复用, 不重复创建
+      - run: |
+          if gh release view nightly -R ${{ github.repository }} > /dev/null 2>&1; then
+            echo "nightly release already exists, reuse it"
+            gh release edit nightly -F ./note -t "Nightly Release" -R ${{ github.repository }} || true
+          else
+            gh release create nightly -F ./note -p -t "Nightly Release" -R ${{ github.repository }}
+          fi
 
   build-and-upload-release:
     if: ${{ always() }}
